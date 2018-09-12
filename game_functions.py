@@ -10,7 +10,7 @@ from bullet import Bullet
 from alien import Alien
 from time import sleep
 
-def check_events(ai_settings, screen, stats, play_button, ship, bullets):
+def check_events(ai_settings, screen, stats, play_button, ship, aliens, bullets):
     #响应按键和鼠标事件
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -21,7 +21,7 @@ def check_events(ai_settings, screen, stats, play_button, ship, bullets):
             check_keyup_events(event, ship)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            check_play_button(stats, play_button, mouse_x, mouse_y)
+            check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y)
 
 def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button):
     # 每次循环时都重绘屏幕
@@ -132,8 +132,9 @@ def check_bullet_alien_collisions(ai_settings, screen, ship, aliens, bullets):
     #如果是这样，就删除相应的子弹和外星人
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
     if len(aliens) == 0:
-        #删除现有了子弹并新建一群外星人
+        #删除现有了子弹并新建一群外星人,加快游戏进行节奏，并他建一群新的外星人
         bullets.empty()
+        ai_settings.increase_speed()
         create_fleet(ai_settings, screen, ship, aliens)
 def ship_hit(ai_settings, stats, screen, ship, aliens, bullets):
     #响应被外星人撞到的飞船
@@ -153,6 +154,7 @@ def ship_hit(ai_settings, stats, screen, ship, aliens, bullets):
         sleep(0.5)
     else:
         stats.game_active = False
+        pygame.mouse.set_visible(True)
 def check_aliens_bottom(ai_settings, stats, screen,ship, aliens,bullets):
     #检查是否有外星人到达了屏幕底端
     screen_rect = screen.get_rect()
@@ -162,7 +164,22 @@ def check_aliens_bottom(ai_settings, stats, screen,ship, aliens,bullets):
             ship_hit(ai_settings, stats, screen,ship, aliens, bullets)
             break
 
-def check_play_button(stats, play_button, mouse_x, mouse_y):
-    #在玩家单击Play按钮开始新游戏
-    if play_button.rect.collidepoint(mouse_x, mouse_y):
+def check_play_button(ai_settings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y):
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y)
+    if button_clicked and not stats.game_active:
+        #重置游戏速度
+        ai_settings.initialize_dynamic_settings()
+        #隐藏光标
+        pygame.mouse.set_visible(False)
+        #在玩家单击Play按钮开始新游戏
+        #重置游戏统计信息
+        stats.reset_stats()
         stats.game_active = True
+
+        #清空外星人和子弹列表
+        aliens.empty()
+        bullets.empty()
+
+        #创建一群新的外星人并让飞船居中
+        create_fleet(ai_settings, screen, ship, aliens)
+        ship.center_ship()
