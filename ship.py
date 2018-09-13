@@ -6,8 +6,10 @@ Create by 2018.08.29
 '''
 import pygame
 import os
-class Ship():
+from pygame.sprite import Sprite
+class Ship(Sprite):
     def __init__(self, ai_settings, screen):
+        super(Ship, self).__init__()
         #初始化化飞船并设置其初始位置
         self.screen = screen
         self.ai_settings = ai_settings
